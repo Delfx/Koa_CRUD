@@ -1,0 +1,9 @@
+<ul id="allthings" class="list-group mt-3">
+    <% if (things.length === 0) { %>
+        <h3>No data in Database</h3>
+    <% } %>
+
+    <% things.forEach((thing) => { %>
+        <%- include _listOne.html %>
+    <% }); %>
+</ul>

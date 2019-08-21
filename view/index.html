@@ -1,0 +1,13 @@
+<h1><%- title %></h1>
+
+<form action="/add" method="POST" id="submitForm">
+    <div class="form-group">
+        <input type="text" name="thing" class="form-control form-control-lg" placeholder="Add Something you like">
+    </div>
+    <input type="submit" value="Add" class="btn btn-dark btn-lg">
+    <a href="/" class="btn btn-danger btn-lg">Cancel</a>
+</form>
+
+<%- include partial/_list.ejs %>
+
+
