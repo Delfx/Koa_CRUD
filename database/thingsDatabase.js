@@ -18,7 +18,7 @@ class DataBase {
 
     getThings() {
         return new Promise((resolve, reject) => {
-            this.connection.query('SELECT*FROM `things` ', function (error, result) {
+            this.connection.query('SELECT * FROM `things` WHERE `userid` IS NULL', function (error, result) {
                 if (error) {
                     return reject(error);
                 }
@@ -91,6 +91,18 @@ class DataBase {
     deleteById(id){
         return new Promise((resolve, reject) => {
             this.connection.query('DELETE FROM `things` WHERE `id` = ?',[id], function (error, result) {
+                if (error) {
+                    return reject(error);
+                }
+
+                resolve(result);
+            });
+        })
+    }
+
+    getUserIdFromThings(id){
+        return new Promise((resolve, reject) => {
+            this.connection.query('SELECT*FROM `things` WHERE `id` = ?',[id], function (error, result) {
                 if (error) {
                     return reject(error);
                 }

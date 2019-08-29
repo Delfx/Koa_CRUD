@@ -1,10 +1,5 @@
 <h1><%- title %></h1>
-<% if(userObj === undefined){ %>
-<form action="/add" method="POST" id="submitForm">
-    <% }else { %>
-    <form action="/addUser" method="POST" id="submitForm">
-        <% } %>
-
+    <form action="/add" method="POST" id="submitForm">
         <div class="form-group">
             <input type="text" name="thing" class="form-control form-control-lg" placeholder="Add Something you like">
         </div>
