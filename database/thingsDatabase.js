@@ -1,4 +1,5 @@
 const mysql = require('mysql');
+const bcrypt = require('bcryptjs');
 
 class DataBase {
     constructor() {
@@ -26,6 +27,64 @@ class DataBase {
                 resolve(result);
             });
         })
+    }
+
+    updateThing(thing, id){
+        return new Promise((resolve, reject) => {
+            this.connection.query('UPDATE `things` SET `thing`=? WHERE `id`=?',[thing, id], function (error, result) {
+                if (error) {
+                    return reject(error);
+                }
+
+                resolve(result.affectedRows);
+            });
+        })
+    }
+
+    addUser(name, pass) {
+        return new Promise((resolve, reject) => {
+            this.connection.query('INSERT INTO `users`(`name`, `pass`) VALUES (?, ?)', [name, pass], function (error, result) {
+                if (error) {
+                    return reject(error);
+                }
+
+                resolve(result.insertId);
+            });
+        })
+    }
+
+    getUserByName(name) {
+        return new Promise((resolve, reject) => {
+            this.connection.query('SELECT * FROM `users` WHERE `name`=?', [name], function (error, result) {
+                if (error) {
+                    return reject(error);
+                }
+
+                resolve(result[0]);
+            });
+        })
+    }
+
+    async checkUser(userName, password) {
+        const user = await this.getUserByName(userName);
+
+        if (!user) {
+            return null;
+        }
+
+        return new Promise((resolve, reject) => {
+            bcrypt.compare(password, user.pass.toString(), function (err, res) {
+                if (err) {
+                    return reject(err);
+                }
+
+                if (res) {
+                    resolve(user);
+                } else {
+                    resolve(null);
+                }
+            });
+        });
     }
 
     getThingsById(userid) {

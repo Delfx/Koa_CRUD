@@ -10,18 +10,30 @@ passport.serializeUser(function (user, done) {
 });
 
 passport.deserializeUser(async function (id, done) {
-    const user = await dataBase.getUserById(id);
-    done(null, {
-        id: user[0].id,
-        name: user[0].name
-    });
+    try {
+        const user = await dataBase.getUserById(id);
+        done(null, {
+            id: user[0].id,
+            name: user[0].name
+        });
+    } catch (e) {
+        done(e)
+    }
 });
 
 passport.use(new LocalStrategy(async function (username, password, done) {
-    const user = await dataBase.getUser(username);
-    done(null, {
-        id: user[0].id,
-        name: user[0].name
-    });
+    try {
+        const userObj = await dataBase.checkUser(username, password);
 
+        if (userObj) {
+            done(null, {
+                id: userObj.id,
+                username: userObj.name
+            });
+        } else {
+            done(null, false);
+        }
+    } catch (e) {
+        done(e);
+    }
 }));

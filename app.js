@@ -8,6 +8,7 @@ require('./auth');
 const passport = require('koa-passport');
 const mysql = require(path.join(__dirname, 'database', 'thingsDatabase.js'));
 const session = require('koa-session');
+const bcrypt = require('bcryptjs');
 
 
 const app = new Koa();
@@ -36,7 +37,10 @@ router.get('/', indexPage);
 router.get('/login', loginPage);
 router.get('/user/logout', logout);
 router.get('/user/things', indexPageById);
+router.get('/registration', registrationForm);
+router.post('/registration', addUser);
 router.post('/delete', deleteThing);
+router.post('/update', updateThing);
 router.post('/add', addItem);
 router.post('/login', login);
 
@@ -53,9 +57,30 @@ async function login(ctx) {
     })(ctx);
 }
 
+async function registrationForm(ctx){
+    await ctx.render('register');
+}
+
+async function addUser(ctx){
+    const body = ctx.request.body;
+    bcrypt.genSalt(10, function (err, salt) {
+        bcrypt.hash(body.password, salt, async function (err, hash) {
+            await dataBase.addUser(body.username, hash);
+        });
+    });
+    ctx.redirect('/')
+}
+
 async function deleteThing(ctx) {
     try {
         const getUserIdfromThings = await dataBase.getUserIdFromThings(ctx.request.body.id);
+
+        if (ctx.isUnauthenticated){
+            await dataBase.deleteById(ctx.request.body.id);
+            ctx.redirect(`/`);
+
+            return;
+        }
 
         if (!(getUserIdfromThings[0].userid === ctx.state.user.id)) {
             ctx.body = "You don't have permission to delete";
@@ -76,6 +101,22 @@ async function deleteThing(ctx) {
         }
         ctx.body = "You don't have permission to delete";
     }
+
+}
+
+async function updateThing(ctx){
+
+    const body = ctx.request.body;
+    console.log(body);
+    try {
+        await dataBase.updateThing(body.changeThing, body.id);
+        console.log(ctx.request.body.changeThing);
+        ctx.redirect('/');
+
+    }catch (e) {
+        console.log(e);
+    }
+
 
 }
 
