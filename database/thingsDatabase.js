@@ -19,7 +19,7 @@ class DataBase {
 
     getThings() {
         return new Promise((resolve, reject) => {
-            this.connection.query('SELECT * FROM `things` WHERE `userid` IS NULL', function (error, result) {
+            this.connection.query('SELECT * FROM `things` WHERE `isPublic` = 0', function (error, result) {
                 if (error) {
                     return reject(error);
                 }
@@ -111,9 +111,20 @@ class DataBase {
         })
     }
 
-    addThingUser(thing, userid) {
+    addThingUser(thing, userid, isPublic) {
         return new Promise((resolve, reject) => {
-            this.connection.query('INSERT INTO `things`(`thing`, `userid`) VALUES (?, ?)', [thing, userid], function (error, result) {
+            if (isPublic === undefined){
+                this.connection.query('INSERT INTO `things`(`thing`, `userid`, `isPublic`) VALUES (?, ?, 0)', [thing, userid, isPublic], function (error, result) {
+                    if (error) {
+                        return reject(error);
+                    }
+
+                    resolve(result);
+                });
+
+                return;
+            }
+            this.connection.query('INSERT INTO `things`(`thing`, `userid`, `isPublic`) VALUES (?, ?, ?)', [thing, userid, isPublic], function (error, result) {
                 if (error) {
                     return reject(error);
                 }
@@ -159,17 +170,19 @@ class DataBase {
         })
     }
 
-    getUserIdFromThings(id){
+    getThing(id){
         return new Promise((resolve, reject) => {
             this.connection.query('SELECT*FROM `things` WHERE `id` = ?',[id], function (error, result) {
                 if (error) {
                     return reject(error);
                 }
 
-                resolve(result);
+                // resolve(result);
+                resolve(result.length === 0 ? null : result[0]);
             });
         })
     }
+
 
 }
 

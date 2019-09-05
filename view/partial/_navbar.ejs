@@ -1,18 +1,17 @@
 <nav class="navbar navbar-expand-sm navbar-light bg-light mb-4">
     <div class="container">
-        <% if(userObj === undefined){ %>
+        <% if(isGuest){ %>
             <a class="navbar-brand" href="/">Things app</a>
         <% }else { %>
-            <a class="navbar-brand" href="<% userObj.id %>">Things app</a>
+            <div class="container p-0">
+                <a class="navbar-brand" href="/user/things">Things app</a>
+                <a class="navbar-brand" href="/">All Things</a>
+            </div>
         <% } %>
         <% if(isLogged){ %>
-            <a class="navbar-brand" href="logout">Logout</a>
+            <a class="navbar-brand" href="/user/logout">Logout</a>
         <% }else { %>
             <a class="navbar-brand" href="/login">Login</a>
         <% } %>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
     </div>
 </nav>

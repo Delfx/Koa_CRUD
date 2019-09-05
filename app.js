@@ -23,7 +23,7 @@ render(app, {
     debug: false
 });
 
-router.use('/user', async (ctx, next) => {
+async function isAuthenticatedMiddleware(ctx, next) {
     if (!ctx.state.isLogged) {
         ctx.redirect('/login');
 
@@ -31,7 +31,53 @@ router.use('/user', async (ctx, next) => {
     }
 
     await next();
-});
+}
+
+//TODO add error check validation
+//TODO model bootstrap
+//TODO add router to diferent file
+
+async function isSameUserMiddleware(ctx, next) {
+
+    if (!('id' in ctx.request.body) || 'string' !== typeof ctx.request.body.id){
+        ctx.status = 400;
+        ctx.body = {
+            success: false,
+            error: "You don't have permission to delete"
+        };
+
+        return;
+    }
+
+    const thing = await dataBase.getThing(ctx.request.body.id);
+
+
+    if (!thing) {
+        ctx.status = 400;
+        ctx.body = {
+            success: false,
+            error: "You don't have permission to delete"
+        };
+
+        return;
+    }
+
+    if (thing.userid !== ctx.state.user.id) {
+        ctx.status = 403;
+        ctx.body = {
+            success: false,
+            error: "You don't have permission to delete"
+        };
+
+        return;
+    }
+
+    await next();
+}
+
+
+router.use('/user', isAuthenticatedMiddleware);
+router.use('/thing', isAuthenticatedMiddleware);
 
 router.get('/', indexPage);
 router.get('/login', loginPage);
@@ -39,16 +85,19 @@ router.get('/user/logout', logout);
 router.get('/user/things', indexPageById);
 router.get('/registration', registrationForm);
 router.post('/registration', addUser);
-router.post('/delete', deleteThing);
-router.post('/update', updateThing);
-router.post('/add', addItem);
+router.post('/thing/delete', isSameUserMiddleware, deleteThing);
+router.post('/thing/update', isSameUserMiddleware, updateThing);
+router.post('addThing', '/thing/add', addItem);
 router.post('/login', login);
+
 
 async function login(ctx) {
     return passport.authenticate('local', async function (err, user, info, status) {
         if (user === false) {
-            ctx.status = 401;
-            ctx.body = {success: false}
+            // ctx.status = 401;
+            await ctx.render('nouser', {
+                success: false
+            });
         } else {
             ctx.body = {success: true};
             ctx.redirect(`/user/things`);
@@ -57,11 +106,11 @@ async function login(ctx) {
     })(ctx);
 }
 
-async function registrationForm(ctx){
+async function registrationForm(ctx) {
     await ctx.render('register');
 }
 
-async function addUser(ctx){
+async function addUser(ctx) {
     const body = ctx.request.body;
     bcrypt.genSalt(10, function (err, salt) {
         bcrypt.hash(body.password, salt, async function (err, hash) {
@@ -73,59 +122,52 @@ async function addUser(ctx){
 
 async function deleteThing(ctx) {
     try {
-        const getUserIdfromThings = await dataBase.getUserIdFromThings(ctx.request.body.id);
-
-        if (ctx.isUnauthenticated){
-            await dataBase.deleteById(ctx.request.body.id);
-            ctx.redirect(`/`);
-
-            return;
-        }
-
-        if (!(getUserIdfromThings[0].userid === ctx.state.user.id)) {
-            ctx.body = "You don't have permission to delete";
-            console.log(!(getUserIdfromThings[0].userid === ctx.state.user.id));
-
-            return;
-        }
-
         await dataBase.deleteById(ctx.request.body.id);
-        ctx.redirect(`/user/things`);
+        console.log(ctx.request.body)
+        ctx.body = {
+            success: true
+        };
+
     } catch (e) {
         console.log(e);
 
-        if (typeof ctx.request.body.id !== "number") {
-            // ctx.body = "You don't have permission";
+        if (typeof ctx.request.body.id !== 'number') {
             ctx.throw(400, 'You dont have permission');
+
             return;
         }
+
         ctx.body = "You don't have permission to delete";
     }
 
 }
 
-async function updateThing(ctx){
+async function updateThing(ctx) {
 
     const body = ctx.request.body;
-    console.log(body);
+
     try {
         await dataBase.updateThing(body.changeThing, body.id);
-        console.log(ctx.request.body.changeThing);
-        ctx.redirect('/');
 
-    }catch (e) {
+        ctx.body = {
+            success: true
+        };
+
+    } catch (e) {
         console.log(e);
     }
 
 
 }
 
+//TODO generate rout address
+
 async function addItem(ctx) {
     if (ctx.state.isLogged) {
+        console.log(ctx.request.body);
         try {
-            await dataBase.addThingUser(ctx.request.body.thing, ctx.state.user.id);
+            await dataBase.addThingUser(ctx.request.body.thing, ctx.state.user.id, ctx.request.body.private);
             ctx.redirect(`/user/things`);
-
 
         } catch (e) {
             console.log(e);
@@ -156,20 +198,16 @@ async function logout(ctx) {
 async function indexPageById(ctx) {
     await ctx.render('index', {
         things: await dataBase.getThingsById(ctx.state.user.id),
-        title: `User ${ctx.state.user.name} loggin`
+        title: `User ${ctx.state.user.name} loggin`,
+        urlAddThing: router.url('addThing')
     });
 }
 
 async function indexPage(ctx) {
-    if (ctx.state.isLogged) {
-        ctx.redirect('/user/things');
-
-        return;
-    }
-
     await ctx.render('index', {
         things: await dataBase.getThings(),
-        title: 'Hello'
+        title: 'All Things',
+        urlAddThing: router.url('addThing')
     });
 }
 
@@ -183,6 +221,7 @@ app
     .use(passport.session())
     .use(async (ctx, next) => {
         ctx.state.isLogged = ctx.isAuthenticated();
+        ctx.state.isGuest = ctx.isUnauthenticated();
         ctx.state.userObj = ctx.state.user;
 
         await next();

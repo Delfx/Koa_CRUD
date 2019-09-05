@@ -47,23 +47,80 @@ function update() {
 
                     const updateData = new URLSearchParams(new FormData(updateForm));
 
-                    await fetch('/update', {
+                    const response = await fetch('/thing/update', {
                         method: 'post',
                         body: updateData
                     });
 
-                    for (const form of allForms.querySelectorAll('form')) {
-                        form.style.display = 'block';
-                        form.classList.add('d-inline');
-                    }
+                    const data = await response.json();
+                    // const data = true;
 
-                    const selectInputValue = event.target.querySelector('input').value;
-                    event.target.parentNode.querySelector('span').innerHTML = selectInputValue;
-                    event.target.remove();
+                    if (data.success) {
+                        for (const form of allForms.querySelectorAll('form')) {
+                            form.style.display = 'block';
+                            form.classList.add('d-inline');
+                        }
+
+                        const selectInputValue = event.target.querySelector('input').value;
+                        event.target.parentNode.querySelector('span').innerHTML = selectInputValue;
+                        event.target.remove();
+                    }
+                    //TODO integrate model after success false;
                 })
             }
         })
     }
 }
 
+async function removeThing() {
+    const selectModalButton = document.getElementsByClassName('modalbutton');
+    const selectallthings = document.querySelector('#allthings');
+    const creattext = document.createElement('h3');
+    creattext.innerHTML = 'No data in Database';
+
+    for (const modalButton of selectModalButton) {
+        modalButton.addEventListener('click', async function (event) {
+            modalButton.classList.add('selectedModal');
+            const getDeleteForm = event.target.parentNode.parentNode.getElementsByClassName('deleteForm');
+
+            for (const form of getDeleteForm) {
+                form.addEventListener('submit', async function (event) {
+                    event.preventDefault();
+
+                    const entry = form.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
+                    const formData = new FormData(form);
+                    const formBody = new URLSearchParams(formData);
+
+                    try {
+                        const response = await fetch('/thing/delete', {
+                            method: 'post',
+                            body: formBody
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            entry.remove();
+                            const deletemodalfade = document.querySelector('.modal-backdrop');
+                            deletemodalfade.remove();
+                            if (selectModalButton.length === 0) {
+                                selectallthings.appendChild(creattext);
+                            }
+
+                        }
+                    } catch (e) {
+                        console.log(e);
+                    }
+
+                });
+            }
+
+        });
+    }
+
+
+}
+
+
 update();
+removeThing();
