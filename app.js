@@ -78,7 +78,6 @@ async function isSameUserMiddleware(ctx, next) {
 }
 
 
-
 router.use('/user', isAuthenticatedMiddleware);
 router.use('/thing', isAuthenticatedMiddleware);
 
@@ -177,6 +176,9 @@ async function indexPageById(ctx) {
 }
 
 async function indexPage(ctx) {
+    await dataBase.createDatabase();
+    await dataBase.createUsersTable();
+    await dataBase.createThingsTable();
     await ctx.render('index', {
         things: await dataBase.getThings(),
         title: 'All Things',

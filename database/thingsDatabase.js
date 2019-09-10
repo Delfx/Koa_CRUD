@@ -17,6 +17,50 @@ class DataBase {
         this.connection.connect();
     }
 
+    createDatabase(){
+        return new Promise((resolve, reject) => {
+            this.connection.query('CREATE DATABASE if not exists addlist', function (error, result) {
+                if (error) {
+                    return reject(error);
+                }
+
+                resolve(result);
+            });
+        })
+    }
+
+    createUsersTable(){
+        return new Promise((resolve, reject) => {
+            this.connection.query('create table if not exists users(`id` int(11) NOT NULL AUTO_INCREMENT,\n' +
+                ' `name` varchar(255) NOT NULL,\n' +
+                ' `pass` varchar(255) NOT NULL,\n' +
+                ' PRIMARY KEY (`id`)\n' +
+                ')', function (error, result) {
+                if (error) {
+                    return reject(error);
+                }
+
+                resolve(result);
+            });
+        })
+    }
+
+    createThingsTable(){
+        return new Promise((resolve, reject) => {
+            this.connection.query('create table if not exists things( `id` int(11) NOT NULL AUTO_INCREMENT,\n' +
+                ' `thing` text CHARACTER SET utf8 COLLATE utf8_lithuanian_ci NOT NULL,\n' +
+                ' `userid` int(11) DEFAULT NULL,\n' +
+                ' `isPublic` tinyint(1) NOT NULL DEFAULT 0,\n' +
+                ' PRIMARY KEY (`id`))', function (error, result) {
+                if (error) {
+                    return reject(error);
+                }
+
+                resolve(result);
+            });
+        })
+    }
+
     getThings() {
         return new Promise((resolve, reject) => {
             this.connection.query('SELECT * FROM `things` WHERE `isPublic` = 0', function (error, result) {
