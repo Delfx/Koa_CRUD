@@ -7,6 +7,7 @@ const path = require('path');
 require('./auth');
 const passport = require('koa-passport');
 const mysql = require(path.join(__dirname, 'database', 'thingsDatabase.js'));
+const loginController = require(path.join(__dirname, 'controller', 'login.js'));
 const session = require('koa-session');
 const bcrypt = require('bcryptjs');
 
@@ -14,6 +15,8 @@ const bcrypt = require('bcryptjs');
 const app = new Koa();
 const router = new KoaRouter();
 const dataBase = new mysql();
+const loginUser = new loginController();
+
 
 render(app, {
     root: path.join(__dirname, 'view'),
@@ -39,7 +42,7 @@ async function isAuthenticatedMiddleware(ctx, next) {
 
 async function isSameUserMiddleware(ctx, next) {
 
-    if (!('id' in ctx.request.body) || 'string' !== typeof ctx.request.body.id){
+    if (!('id' in ctx.request.body) || 'string' !== typeof ctx.request.body.id) {
         ctx.status = 400;
         ctx.body = {
             success: false,
@@ -50,7 +53,6 @@ async function isSameUserMiddleware(ctx, next) {
     }
 
     const thing = await dataBase.getThing(ctx.request.body.id);
-
 
     if (!thing) {
         ctx.status = 400;
@@ -76,39 +78,21 @@ async function isSameUserMiddleware(ctx, next) {
 }
 
 
+
 router.use('/user', isAuthenticatedMiddleware);
 router.use('/thing', isAuthenticatedMiddleware);
 
-router.get('/', indexPage);
-router.get('/login', loginPage);
-router.get('/user/logout', logout);
-router.get('/user/things', indexPageById);
-router.get('/registration', registrationForm);
+router.get('index', '/', indexPage);
+router.get('/login', loginUser.loginPage);
+router.get('/user/logout', loginUser.logout);
+router.get('userThings', '/user/things', indexPageById);
+router.get('/registration', loginUser.registrationForm);
 router.post('/registration', addUser);
 router.post('/thing/delete', isSameUserMiddleware, deleteThing);
 router.post('/thing/update', isSameUserMiddleware, updateThing);
 router.post('addThing', '/thing/add', addItem);
-router.post('/login', login);
+router.post('/login', loginUser.login);
 
-
-async function login(ctx) {
-    return passport.authenticate('local', async function (err, user, info, status) {
-        if (user === false) {
-            // ctx.status = 401;
-            await ctx.render('nouser', {
-                success: false
-            });
-        } else {
-            ctx.body = {success: true};
-            ctx.redirect(`/user/things`);
-            return ctx.login(user)
-        }
-    })(ctx);
-}
-
-async function registrationForm(ctx) {
-    await ctx.render('register');
-}
 
 async function addUser(ctx) {
     const body = ctx.request.body;
@@ -117,13 +101,13 @@ async function addUser(ctx) {
             await dataBase.addUser(body.username, hash);
         });
     });
-    ctx.redirect('/')
+    ctx.redirect(router.url('index'))
 }
 
 async function deleteThing(ctx) {
     try {
         await dataBase.deleteById(ctx.request.body.id);
-        console.log(ctx.request.body)
+        console.log(ctx.request.body);
         ctx.body = {
             success: true
         };
@@ -141,6 +125,7 @@ async function deleteThing(ctx) {
     }
 
 }
+
 
 async function updateThing(ctx) {
 
@@ -160,14 +145,12 @@ async function updateThing(ctx) {
 
 }
 
-//TODO generate rout address
-
 async function addItem(ctx) {
     if (ctx.state.isLogged) {
         console.log(ctx.request.body);
         try {
             await dataBase.addThingUser(ctx.request.body.thing, ctx.state.user.id, ctx.request.body.private);
-            ctx.redirect(`/user/things`);
+            ctx.redirect(router.url('userThings'));
 
         } catch (e) {
             console.log(e);
@@ -178,21 +161,11 @@ async function addItem(ctx) {
     }
     try {
         await dataBase.addThing(ctx.request.body.thing);
-        ctx.redirect('/');
+        ctx.redirect(router.url('index'));
 
     } catch (e) {
         console.log(e);
     }
-}
-
-async function loginPage(ctx) {
-    await ctx.render('login');
-}
-
-async function logout(ctx) {
-    ctx.logout();
-    ctx.redirect('/');
-
 }
 
 async function indexPageById(ctx) {

@@ -1,4 +1,4 @@
-<li class="list-group-item">
+<li class="list-group-item" data-id="<%= thing.id %>">
     <div class="groupForm">
         <form class="d-inline">
             <span><%= thing.thing %></span>
@@ -9,34 +9,12 @@
                 <input type="hidden" value="<%= thing.id %>" name="id" class="id">
             </form>
 
-            <div class="container d-inline p-0">
+            <div class="container d-inline p-0" >
                 <button type="submit" class="btn btn-dark btn-sm ml-2 modalbutton" data-toggle="modal"
-                        data-target="#exampleModal<%= thing.id %>">
+                        data-target="#exampleModal" data-id="<%= thing.id %>">
                     Delete
                 </button>
-
-                <!-- Modal -->
-                <div class="modal fade" id="exampleModal<%= thing.id %>" tabindex="-1" role="dialog"
-                     aria-labelledby="exampleModalLabel"
-                     aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-body">
-                                Are you sure you want to delete this item?
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                <form action="/thing/delete" method="post" class="deleteForm d-inline">
-                                    <input type="submit" value="Yes"
-                                           class="btn btn-danger ml-2">
-                                    <input type="hidden" value="<%= thing.id %>" name="id" class="hiddenInput">
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
-
         <% } %>
     </div>
 </li>

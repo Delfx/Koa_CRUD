@@ -105,8 +105,7 @@ class DataBase {
                 if (error) {
                     return reject(error);
                 }
-
-                resolve(result);
+                resolve(result.length === 0 ? null : result[0]);
             });
         })
     }
@@ -176,8 +175,6 @@ class DataBase {
                 if (error) {
                     return reject(error);
                 }
-
-                // resolve(result);
                 resolve(result.length === 0 ? null : result[0]);
             });
         })

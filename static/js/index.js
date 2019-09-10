@@ -72,55 +72,60 @@ function update() {
     }
 }
 
-async function removeThing() {
+function removeThing() {
     const selectModalButton = document.getElementsByClassName('modalbutton');
+    const deleteForm = document.querySelector('.deleteForm');
     const selectallthings = document.querySelector('#allthings');
     const creattext = document.createElement('h3');
+    const hideModal = $('#exampleModal');
+
     creattext.innerHTML = 'No data in Database';
 
-    for (const modalButton of selectModalButton) {
-        modalButton.addEventListener('click', async function (event) {
-            modalButton.classList.add('selectedModal');
-            const getDeleteForm = event.target.parentNode.parentNode.getElementsByClassName('deleteForm');
+    deleteForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
 
-            for (const form of getDeleteForm) {
-                form.addEventListener('submit', async function (event) {
-                    event.preventDefault();
+        const formData = new FormData(deleteForm);
+        const formBody = new URLSearchParams(formData);
 
-                    const entry = form.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
-                    const formData = new FormData(form);
-                    const formBody = new URLSearchParams(formData);
+        try {
+            const response = await fetch('/thing/delete', {
+                method: 'post',
+                body: formBody
+            });
 
-                    try {
-                        const response = await fetch('/thing/delete', {
-                            method: 'post',
-                            body: formBody
-                        });
+            const data = await response.json();
 
-                        const data = await response.json();
-
-                        if (data.success) {
-                            entry.remove();
-                            const deletemodalfade = document.querySelector('.modal-backdrop');
-                            deletemodalfade.remove();
-                            if (selectModalButton.length === 0) {
-                                selectallthings.appendChild(creattext);
-                            }
-
-                        }
-                    } catch (e) {
-                        console.log(e);
-                    }
-
-                });
+            if (data.success) {
+                const thingById = document.querySelector(`#allthings li[data-id="${formData.get('id')}"]`);
+                thingById.remove();
+                if (selectModalButton.length === 0) {
+                    selectallthings.appendChild(creattext);
+                }
+                hideModal.modal('hide');
             }
 
-        });
-    }
+        } catch (e) {
+            console.log(e);
+        }
 
+    });
 
 }
 
 
+async function selectModal() {
+    const selectModalButton = document.getElementsByClassName('modalbutton');
+    const hiddenDeleteInput = document.querySelector('.hiddenDeleteInput');
+
+    for (const modalButton of selectModalButton) {
+        modalButton.addEventListener('click', function (event) {
+            const thingId = event.target.dataset.id;
+            hiddenDeleteInput.value = thingId;
+        })
+    }
+
+}
+
 update();
 removeThing();
+selectModal();
