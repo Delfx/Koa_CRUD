@@ -102,10 +102,10 @@ router.use('/thing', isAuthenticatedMiddleware);
 
 router.get('index', '/', indexPage);
 router.get('/login', loginUser.loginPage);
-router.get('/user/logout', loginUser.logout);
 router.get('userThings', '/user/things', indexPageById);
 router.get('/registration', loginUser.registrationForm);
 router.get('/user/about', userAbout);
+router.post('/user/logout', loginUser.logout);
 router.post('/registration', addUser);
 router.post('/thing/delete', isSameUserMiddleware, deleteThing);
 router.post('/thing/update', isSameUserMiddleware, updateThing);
@@ -232,6 +232,7 @@ app
         ctx.state.isGuest = ctx.isUnauthenticated();
         ctx.state.userObj = ctx.state.user;
         ctx.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+        ctx.set('Access-Control-Allow-Credentials', true);
         ctx.set('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
         ctx.set('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS');
 

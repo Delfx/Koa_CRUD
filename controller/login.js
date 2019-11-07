@@ -31,8 +31,7 @@ class Login {
 
     async logout(ctx) {
         ctx.logout();
-        ctx.redirect('/');
-
+        ctx.body = {isLogged: false};
     }
 
     async registrationForm(ctx) {
