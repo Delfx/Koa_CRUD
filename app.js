@@ -1,4 +1,5 @@
 const Koa = require('koa');
+const cors = require('@koa/cors');
 const KoaRouter = require('koa-router');
 const render = require('koa-ejs');
 const bodyParser = require('koa-bodyparser');
@@ -28,12 +29,30 @@ render(app, {
 
 async function isAuthenticatedMiddleware(ctx, next) {
     if (!ctx.state.isLogged) {
-        ctx.redirect('/login');
+        ctx.body = {
+            isLogged: false
+        };
+
+        // ctx.redirect('/login');
 
         return;
     }
 
     await next();
+}
+
+async function isGuestMiddleware(ctx, next) {
+
+    if (ctx.state.isLogged) {
+        ctx.status = 403;
+        ctx.body = {
+            message: 'User is Logged'
+        };
+
+        return;
+    }
+    await next();
+
 }
 
 //TODO add error check validation
@@ -86,11 +105,12 @@ router.get('/login', loginUser.loginPage);
 router.get('/user/logout', loginUser.logout);
 router.get('userThings', '/user/things', indexPageById);
 router.get('/registration', loginUser.registrationForm);
+router.get('/user/about', userAbout);
 router.post('/registration', addUser);
 router.post('/thing/delete', isSameUserMiddleware, deleteThing);
 router.post('/thing/update', isSameUserMiddleware, updateThing);
 router.post('addThing', '/thing/add', addItem);
-router.post('/login', loginUser.login);
+router.post('/login', isGuestMiddleware, loginUser.login);
 
 
 async function addUser(ctx) {
@@ -101,6 +121,13 @@ async function addUser(ctx) {
         });
     });
     ctx.redirect(router.url('index'))
+}
+
+async function userAbout(ctx) {
+    ctx.body = {
+        user: ctx.state.user,
+        isLogged: true
+    };
 }
 
 async function deleteThing(ctx) {
@@ -179,16 +206,22 @@ async function indexPage(ctx) {
     await dataBase.createDatabase();
     await dataBase.createUsersTable();
     await dataBase.createThingsTable();
-    await ctx.render('index', {
-        things: await dataBase.getThings(),
-        title: 'All Things',
-        urlAddThing: router.url('addThing')
-    });
+
+    ctx.body = {
+        things: await dataBase.getThings()
+    };
+
+    // await ctx.render('index', {
+    //     things: await dataBase.getThings(),
+    //     title: 'All Things',
+    //     urlAddThing: router.url('addThing')
+    // });
 }
 
 app.keys = ['secret'];
 
 app
+    // .use(cors())
     .use(bodyParser())
     .use(serve(path.join(__dirname, 'static')))
     .use(session({}, app))
@@ -198,9 +231,12 @@ app
         ctx.state.isLogged = ctx.isAuthenticated();
         ctx.state.isGuest = ctx.isUnauthenticated();
         ctx.state.userObj = ctx.state.user;
+        ctx.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+        ctx.set('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+        ctx.set('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS');
 
         await next();
     })
     .use(router.routes()).use(router.allowedMethods());
 
-app.listen(3000);
+app.listen(3001);

@@ -10,12 +10,16 @@ class Login {
     async login(ctx) {
         return passport.authenticate('local', async function (err, user, info, status) {
             if (user === false) {
-                await ctx.render('nouser', {
-                    success: false
-                });
+                ctx.body = {isLogged: false};
+                // await ctx.render('nouser', {
+                //     success: false
+                // });
             } else {
-                ctx.body = {success: true};
-                ctx.redirect('/user/things');
+                ctx.body = {isLogged: true,
+                id: user.id,
+                username: user.username
+                };
+                // ctx.redirect('/user/things');
                 return ctx.login(user)
             }
         })(ctx);
