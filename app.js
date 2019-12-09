@@ -60,7 +60,8 @@ async function isGuestMiddleware(ctx, next) {
 //TODO add router to diferent file
 
 async function isSameUserMiddleware(ctx, next) {
-
+    console.log(ctx.state.user.id);
+    console.log(ctx.request.body);
     if (!('id' in ctx.request.body) || 'string' !== typeof ctx.request.body.id) {
         ctx.status = 400;
         ctx.body = {
@@ -92,6 +93,7 @@ async function isSameUserMiddleware(ctx, next) {
 
         return;
     }
+
 
     await next();
 }
@@ -221,7 +223,7 @@ async function indexPage(ctx) {
 app.keys = ['secret'];
 
 app
-    // .use(cors())
+// .use(cors())
     .use(bodyParser())
     .use(serve(path.join(__dirname, 'static')))
     .use(session({}, app))
