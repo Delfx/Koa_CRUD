@@ -28,6 +28,13 @@ render(app, {
 });
 
 async function isAuthenticatedMiddleware(ctx, next) {
+
+    if(ctx._matchedRouteName === 'addThing'){
+        await next();
+
+        return;
+    }
+
     if (!ctx.state.isLogged) {
         ctx.body = {
             isLogged: false
@@ -42,7 +49,6 @@ async function isAuthenticatedMiddleware(ctx, next) {
 }
 
 async function isGuestMiddleware(ctx, next) {
-
     if (ctx.state.isLogged) {
         ctx.status = 403;
         ctx.body = {
@@ -178,7 +184,10 @@ async function addItem(ctx) {
         console.log(ctx.request.body);
         try {
             await dataBase.addThingUser(ctx.request.body.thing, ctx.state.user.id, ctx.request.body.private);
-            ctx.redirect(router.url('userThings'));
+
+            ctx.body = {
+                success: true
+            };
 
         } catch (e) {
             console.log(e);
@@ -189,7 +198,10 @@ async function addItem(ctx) {
     }
     try {
         await dataBase.addThing(ctx.request.body.thing);
-        ctx.redirect(router.url('index'));
+
+        ctx.body = {
+            success: true
+        };
 
     } catch (e) {
         console.log(e);
@@ -197,11 +209,10 @@ async function addItem(ctx) {
 }
 
 async function indexPageById(ctx) {
-    await ctx.render('index', {
-        things: await dataBase.getThingsById(ctx.state.user.id),
-        title: `User ${ctx.state.user.name} loggin`,
-        urlAddThing: router.url('addThing')
-    });
+    ctx.body =
+        {
+            things: await dataBase.getThingsById(ctx.state.user.id),
+        };
 }
 
 async function indexPage(ctx) {
